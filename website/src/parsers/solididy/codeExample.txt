@@ -1,0 +1,25 @@
+pragma solidity ^0.4.18;
+
+contract SimpleStore {
+  uint private value = 1;
+  address owner;
+  
+  constructor(uint _value) public {
+    owner = msg.sender;
+    value = _value;
+  }
+
+  function set(uint _value) private {
+    require(msg.sender == owner);
+    value = _value;
+  }
+
+  function get() public view returns (uint, uint) {
+    return (value, 1);
+  }
+  
+  // fallback function
+  function() public payable {
+  	x = 1;
+  }
+}
