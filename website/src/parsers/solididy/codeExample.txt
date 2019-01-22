@@ -20,6 +20,6 @@ contract SimpleStore {
   
   // fallback function
   function() public payable {
-  	value = 1;
+  	x = 1;
   }
 }

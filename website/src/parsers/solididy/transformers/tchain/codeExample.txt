@@ -10,7 +10,7 @@ const jsGenerator = (node) => {
         case 'ContractDefinition': {
           	let s = '';
           	if (node.baseContracts.length) {
-              s = "extends " + node.baseContracts.map(jsGenerator).join(', ');
+              s = "extends " + node.baseContracts.map(jsGenerator);
             }
             return (
 `@contract class ${node.name} ${s}{
@@ -26,22 +26,23 @@ ${node.subNodes.map(jsGenerator).join('\n')}
         case 'FunctionDefinition':
             if (node.isConstructor) {
               return `\n// Transform from Solidity constructor
-@on('deployed') onDeployed(${node.parameters.parameters.map(jsGenerator).join(',')}) {
+@on('deployed') onDeployed(${node.parameters.parameters.map(jsGenerator)}) {
 ${jsGenerator(node.body)}
 }`
             } else if (node.name === "") {
               return `\n// Transform from Solidity fallback function
-@on('received') onReceived(${node.parameters.parameters.map(jsGenerator).join(',')}) {
+@on('received') onReceived(${node.parameters.parameters.map(jsGenerator)}) {
 ${jsGenerator(node.body)}
 }`
             }else {
               states[node.name] = node.visibility;
               if (node.visibility === "private") {
-                return `\n#${node.name} = (${node.parameters.parameters.map(jsGenerator).join(',')}) => {
+                return `\n#${node.name} = (${node.parameters.parameters.map(jsGenerator)}) => {
 ${jsGenerator(node.body)}
 }`
               } else {
-              return `\n${node.name}(${node.parameters.parameters.map(jsGenerator).join(',')}) {
+                const mutable = node.stateMutability?("@"+node.stateMutability + " "):"";
+              	return `\n${mutable}${node.name}(${node.parameters.parameters.map(jsGenerator)}) {
 ${jsGenerator(node.body)}
 }`
               }
@@ -55,11 +56,13 @@ ${jsGenerator(node.body)}
 
         case 'StateVariableDeclaration':
         case 'VariableDeclarationStatement': {
-          	var s = '';
+          	let s = '';
+          	const warn = "// WARN: instance variables won't auto persist";
           	const v = node.variables[0];
             if (v.isStateVar) {
               states[v.name] = v.visibility;
-              s = (v.visibility === "private"?"#":"") + v.name;
+              s += warn + "\n";
+              s += (v.visibility === "private"?"#":"") + v.name;
             } else {
               s = v.isDeclaredConst?"const ":"let " + v.name;
             }
